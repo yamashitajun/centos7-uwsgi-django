@@ -1,0 +1,45 @@
+#Nginxおよびpython3インストール用リポジトリの追加
+yum install -y epel-release
+yum install -y https://centos7.iuscommunity.org/ius-release.rpm
+
+#python3.6インストール
+yum install -y python36u python36u-libs python36u-devel python36u-pip
+
+#Nginx のインストール
+yum install -y nginx
+
+#Development Toolsインストール（uWSGIインストールの前提）
+sudo yum groupinstall -y "Development Tools"
+
+#uWSGIインストール
+pip3.6 install uwsgi
+
+#djangoのインストール
+pip3.6 install django==2.1.*
+
+#プロジェクト用ディレクトリの作成
+mkdir /django
+
+#プロジェクトディレクトリを送り込む
+ローカルディレクトリをコンテナの/django/djangoproに
+
+cd /django/djangopro
+
+#nginxのコンフィグファイルを設定する
+ln -s /django/djangopro/mysite_nginx.conf /etc/nginx/conf.d/
+
+#staticファイルの収集
+python3.6 manage.py collectstatic
+
+#nginxの起動
+systemctl start nginx.service
+
+#uwsgiの起動
+##TCPソケットの場合
+uwsgi --socket :8001 --module config.wsgi
+
+##Unixソケットの場合
+uwsgi --socket djangopro.sock --module config.wsgi --chmod-socket=666
+
+##iniファイルを利用した起動
+uwsgi --ini mysite_uwsgi.ini
